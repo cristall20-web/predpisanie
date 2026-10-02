@@ -1,3 +1,4 @@
+```
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -829,11 +830,146 @@
       }
 
 
-      // Пока сервер генерации ещё не подключён.
+      const submitButton = document.getElementById("submitButton");
+      const downloadArea = document.getElementById("downloadArea");
+      const docxDownload = document.getElementById("docxDownload");
+      const pdfDownload = document.getElementById("pdfDownload");
+
+      // Render-бэкенд генерации документов.
+      const API_URL = "https://predpisanie-backend.onrender.com/generate";
+
+      // Убираем старые ссылки на скачивание, если форма отправляется повторно.
+      if (window._docxObjectUrl) {
+        URL.revokeObjectURL(window._docxObjectUrl);
+        window._docxObjectUrl = null;
+      }
+
+      if (window._pdfObjectUrl) {
+        URL.revokeObjectURL(window._pdfObjectUrl);
+        window._pdfObjectUrl = null;
+      }
+
+      downloadArea.style.display = "none";
+      submitButton.disabled = true;
+      submitButton.textContent = "Формируем документы…";
+
       showMessage(
-        "Форма заполнена правильно. Генератор документов подключим на следующем этапе.",
+        "Документы формируются. Это может занять немного времени, особенно после простоя сервера.",
         "info"
       );
+
+      try {
+        async function generateFile(outputFormat) {
+          const formData = new FormData();
+
+          formData.append("executor", executor);
+          formData.append("form_date", date);
+          formData.append("number", number);
+          formData.append("organization", organizationValue);
+          formData.append("location", location);
+          formData.append("system_name", systemValue);
+          formData.append("description", description);
+          formData.append("corrective_actions", correctiveActions);
+          formData.append("deadline", deadline);
+          formData.append("output_format", outputFormat);
+
+          selectedPhotos.forEach(function(file) {
+            formData.append("photos", file, file.name);
+          });
+
+          const response = await fetch(API_URL, {
+            method: "POST",
+            body: formData
+          });
+
+          if (!response.ok) {
+            let errorMessage = "Сервер не смог сформировать документ.";
+
+            try {
+              const errorData = await response.json();
+
+              if (errorData && errorData.detail) {
+                errorMessage = errorData.detail;
+              }
+            } catch (error) {
+              // Если сервер вернул не JSON, оставляем общее сообщение.
+            }
+
+            throw new Error(errorMessage);
+          }
+
+          const blob = await response.blob();
+
+          let filename = outputFormat === "pdf"
+            ? "Предписание.pdf"
+            : "Предписание.docx";
+
+          const disposition = response.headers.get("Content-Disposition");
+
+          if (disposition) {
+            const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+
+            if (utf8Match) {
+              try {
+                filename = decodeURIComponent(utf8Match[1]);
+              } catch (error) {
+                // Оставляем имя по умолчанию.
+              }
+            } else {
+              const simpleMatch = disposition.match(/filename="?([^"]+)"?/i);
+
+              if (simpleMatch) {
+                filename = simpleMatch[1];
+              }
+            }
+          }
+
+          return {
+            blob: blob,
+            filename: filename
+          };
+        }
+
+        // Backend выдаёт один файл за запрос, поэтому получаем DOCX и PDF
+        // двумя последовательными запросами с одинаковыми данными.
+        const docxResult = await generateFile("docx");
+
+        showMessage(
+          "DOCX сформирован. Теперь формируем PDF…",
+          "info"
+        );
+
+        const pdfResult = await generateFile("pdf");
+
+        window._docxObjectUrl = URL.createObjectURL(docxResult.blob);
+        window._pdfObjectUrl = URL.createObjectURL(pdfResult.blob);
+
+        docxDownload.href = window._docxObjectUrl;
+        docxDownload.download = docxResult.filename;
+
+        pdfDownload.href = window._pdfObjectUrl;
+        pdfDownload.download = pdfResult.filename;
+
+        downloadArea.style.display = "flex";
+
+        showMessage(
+          "Готово. DOCX и PDF сформированы.",
+          "info"
+        );
+
+      } catch (error) {
+        console.error(error);
+
+        showMessage(
+          "Не удалось сформировать документы: " +
+          (error.message || "неизвестная ошибка"),
+          "error"
+        );
+
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "Сформировать предписание";
+      }
 
     });
 
@@ -861,3 +997,4 @@
 
 </body>
 </html>
+```
