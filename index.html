@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Предписание — БОВИС</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f7f9;color:#222}
+.container{max-width:900px;margin:30px auto;padding:0 20px}
+.header,.form-card{background:#fff;padding:25px 30px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.header{margin-bottom:20px}.header h1{margin:0 0 8px;font-size:28px;color:#1A89C0}.subtitle{color:#666;font-size:15px}
+.field{margin-bottom:22px}label{display:block;font-weight:bold;margin-bottom:7px}.required{color:#d32f2f}
+input,select,textarea{width:100%;padding:11px 13px;border:1px solid #cbd5dc;border-radius:7px;font:15px Arial,sans-serif;background:#fff}
+textarea{min-height:120px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#1A89C0;box-shadow:0 0 0 2px rgba(26,137,192,.12)}
+.error{border-color:#d32f2f!important;background:#fff6f6}.error-text{color:#d32f2f;font-size:13px;margin-top:5px;display:none}.show{display:block}.hidden{display:none}
+.photo-area{border:2px dashed #cbd5dc;border-radius:8px;padding:20px;text-align:center;background:#fafcfd;transition:.15s}
+.photo-area.dragover{border-color:#1A89C0;background:#eef8fd}
+.add-photo{display:inline-block;padding:11px 18px;background:#1A89C0;color:#fff;border-radius:7px;cursor:pointer;font-weight:bold}
+.add-photo:hover{background:#1475a5}#photos{display:none}
+.photo-list{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:15px}
+.photo-item{position:relative;border:1px solid #ddd;border-radius:8px;overflow:hidden;background:#fff}
+.photo-item img{width:100%;height:130px;object-fit:cover;display:block}
+.photo-name{padding:8px;font-size:13px;text-align:center;font-weight:bold}
+.remove-photo{position:absolute;top:6px;right:6px;border:none;background:#d32f2f;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px}
+.download-area{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+.download-button{border:0;padding:13px 22px;border-radius:7px;font:bold 16px Arial,sans-serif;color:#fff;cursor:pointer}
+.download-button.docx{background:#2e7d32}.download-button.pdf{background:#b3261e}
+.download-button:disabled{opacity:.55;cursor:wait}
+.message{margin-top:20px;padding:15px;border-radius:8px;display:none}
+.message.info{display:block;background:#eef7fb;color:#176589}
+.message.error{display:block;background:#fff0f0;color:#a52222}
+@media(max-width:600px){.container{margin:15px auto;padding:0 10px}.form-card,.header{padding:20px}.header h1{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>Предписание</h1>
+<div class="subtitle">ООО «БОВИС УПРАВЛЕНИЕ ПРОЕКТАМИ»</div>
+</div>
+
+<div class="form-card">
+<form id="prescriptionForm">
+
+<div class="field">
+<label for="executor">Исполнитель <span class="required">*</span></label>
+<select id="executor" required>
+<option value="">Выберите исполнителя</option>
+<option>Сергеев Д.В.</option><option>Цирельсон К.Я.</option><option>Москвин С.В.</option>
+<option>Артемьев В.Г.</option><option>Шевцов В.П.</option><option>Кузьминых С.П.</option><option>Жадаев Е.П.</option>
+</select>
+<div class="error-text" id="executorError">Выберите исполнителя.</div>
+</div>
+
+<div class="field">
+<label for="date">Дата <span class="required">*</span></label>
+<input type="date" id="date" required>
+<div class="error-text" id="dateError">Укажите дату.</div>
+</div>
+
+<div class="field">
+<label for="number">Номер</label>
+<input type="text" id="number" placeholder="Необязательно">
+</div>
+
+<div class="field">
+<label for="organization">Организация <span class="required">*</span></label>
+<select id="organization" required>
+<option value="">Выберите организацию</option>
+<option>КМТ-инженеринг</option><option>Армо-Лайн</option><option>Велий</option><option>ИджЭнерго</option>
+<option>МСМ Регион</option><option>ПМ Стандарт</option><option>ПСК</option><option>СигналПро</option>
+<option>РИТАР</option><option>МКК</option><option>ТИЕКТА</option><option>МК РУС ИНДАСТРИС</option>
+<option>ФАХМАНН</option><option>Группа компаний АСК</option><option>ГК ПРОЭМР</option><option>ТЭЛМАС</option>
+<option>РСК-24</option><option>Мегафон</option><option value="Другая организация">Другая организация</option>
+</select>
+<div id="otherOrganizationBlock" class="hidden" style="margin-top:10px">
+<input type="text" id="otherOrganization" placeholder="Введите название организации">
+</div>
+<div class="error-text" id="organizationError">Выберите организацию.</div>
+</div>
+
+<div class="field">
+<label for="location">Место / участок <span class="required">*</span></label>
+<input type="text" id="location" placeholder="Например: Участок №3, этаж 5" required>
+<div class="error-text" id="locationError">Укажите место / участок.</div>
+</div>
+
+<div class="field">
+<label for="system">Система / РД <span class="required">*</span></label>
+<select id="system" required>
+<option value="">Выберите систему / РД</option>
+<option>ОТ и ТБ</option><option>ОСР</option><option>ЭОМ</option><option>СС</option><option>ОВ</option>
+<option value="Другое">Другое</option>
+</select>
+<div id="otherSystemBlock" class="hidden" style="margin-top:10px">
+<input type="text" id="otherSystem" placeholder="Введите систему / РД">
+</div>
+<div class="error-text" id="systemError">Выберите систему / РД.</div>
+</div>
+
+<div class="field">
+<label for="description">Описание нарушения <span class="required">*</span></label>
+<textarea id="description" placeholder="Опишите выявленное нарушение" required></textarea>
+<div class="error-text" id="descriptionError">Заполните описание нарушения.</div>
+</div>
+
+<div class="field">
+<label for="correctiveActions">Корректирующие мероприятия <span class="required">*</span></label>
+<textarea id="correctiveActions" placeholder="Опишите необходимые корректирующие мероприятия" required></textarea>
+<div class="error-text" id="correctiveActionsError">Заполните корректирующие мероприятия.</div>
+</div>
+
+<div class="field">
+<label for="deadline">Срок устранения <span class="required">*</span></label>
+<input type="date" id="deadline" required>
+<div class="error-text" id="deadlineError">Укажите срок устранения.</div>
+</div>
+
+<div class="field">
+<label>Фотографии</label>
+<div class="photo-area" id="photoArea">
+<label class="add-photo" for="photos">+ Добавить фотографии</label>
+<input type="file" id="photos" accept="image/*" multiple>
+<div style="margin-top:10px;color:#777;font-size:13px">
+Можно добавить любое количество фотографий. Можно также перетащить фотографии мышкой сюда.
+</div>
+<div id="photoList" class="photo-list"></div>
+</div>
+</div>
+
+<div class="download-area">
+<button type="button" class="download-button docx" id="docxButton">Скачать Word</button>
+<button type="button" class="download-button pdf" id="pdfButton">Скачать PDF</button>
+</div>
+
+</form>
+<div id="message" class="message"></div>
+</div>
+</div>
+
+<script>
+const API="https://predpisanie-backend.onrender.com";
+
+const today=new Date();
+document.getElementById("date").value=
+`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+
+const organization=document.getElementById("organization");
+const system=document.getElementById("system");
+
+organization.addEventListener("change",()=>{
+document.getElementById("otherOrganizationBlock").classList.toggle("hidden",organization.value!=="Другая организация");
+});
+
+system.addEventListener("change",()=>{
+document.getElementById("otherSystemBlock").classList.toggle("hidden",system.value!=="Другое");
+});
+
+let selectedPhotos=[];
+const photoInput=document.getElementById("photos");
+const photoList=document.getElementById("photoList");
+const photoArea=document.getElementById("photoArea");
+
+photoInput.addEventListener("change",e=>{
+addPhotos(Array.from(e.target.files));
+e.target.value="";
+});
+
+["dragenter","dragover"].forEach(eventName=>{
+photoArea.addEventListener(eventName,e=>{
+e.preventDefault();
+e.stopPropagation();
+photoArea.classList.add("dragover");
+});
+});
+
+["dragleave","drop"].forEach(eventName=>{
+photoArea.addEventListener(eventName,e=>{
+e.preventDefault();
+e.stopPropagation();
+photoArea.classList.remove("dragover");
+});
+});
+
+photoArea.addEventListener("drop",e=>{
+addPhotos(Array.from(e.dataTransfer.files));
+});
+
+function addPhotos(files){
+for(const file of files){
+if(file.type.startsWith("image/")) selectedPhotos.push(file);
+}
+renderPhotos();
+}
+
+function renderPhotos(){
+photoList.innerHTML="";
+selectedPhotos.forEach((file,index)=>{
+const item=document.createElement("div");
+item.className="photo-item";
+
+const img=document.createElement("img");
+img.src=URL.createObjectURL(file);
+
+const name=document.createElement("div");
+name.className="photo-name";
+name.textContent="Фото "+(index+1);
+
+const remove=document.createElement("button");
+remove.type="button";
+remove.className="remove-photo";
+remove.textContent="×";
+remove.onclick=()=>{
+selectedPhotos.splice(index,1);
+renderPhotos();
+};
+
+item.append(img,name,remove);
+photoList.appendChild(item);
+});
+}
+
+function orgValue(){
+return organization.value==="Другая организация"
+?document.getElementById("otherOrganization").value.trim()
+:organization.value;
+}
+
+function systemValue(){
+return system.value==="Другое"
+?document.getElementById("otherSystem").value.trim()
+:system.value;
+}
+
+function clearErrors(){
+document.querySelectorAll(".error").forEach(x=>x.classList.remove("error"));
+document.querySelectorAll(".error-text").forEach(x=>x.classList.remove("show"));
+}
+
+function validate(){
+clearErrors();
+let ok=true;
+
+const fields=[
+["executor","executorError"],
+["date","dateError"],
+["organization","organizationError"],
+["location","locationError"],
+["system","systemError"],
+["description","descriptionError"],
+["correctiveActions","correctiveActionsError"],
+["deadline","deadlineError"]
+];
+
+for(const [id,errorId] of fields){
+let value=document.getElementById(id).value.trim();
+if(id==="organization") value=orgValue();
+if(id==="system") value=systemValue();
+
+if(!value){
+document.getElementById(id).classList.add("error");
+document.getElementById(errorId).classList.add("show");
+ok=false;
+}
+}
+
+if(!ok) showMessage("Заполните все обязательные поля.","error");
+return ok;
+}
+
+function showMessage(text,type){
+const message=document.getElementById("message");
+message.textContent=text;
+message.className="message "+type;
+}
+
+async function downloadFile(format,button){
+if(!validate()) return;
+
+button.disabled=true;
+showMessage(format==="docx"?"Формируем Word…":"Формируем PDF…","info");
+
+const data=new FormData();
+data.append("executor",document.getElementById("executor").value);
+data.append("form_date",document.getElementById("date").value);
+data.append("number",document.getElementById("number").value.trim());
+data.append("organization",orgValue());
+data.append("location",document.getElementById("location").value.trim());
+data.append("system_name",systemValue());
+data.append("description",document.getElementById("description").value.trim());
+data.append("corrective_actions",document.getElementById("correctiveActions").value.trim());
+data.append("deadline",document.getElementById("deadline").value);
+data.append("output_format",format);
+
+selectedPhotos.forEach(file=>{
+data.append("photos",file,file.name);
+});
+
+try{
+const response=await fetch(API+"/generate",{method:"POST",body:data});
+
+if(!response.ok){
+let message="Ошибка формирования файла.";
+try{
+const json=await response.json();
+message=json.detail||message;
+}catch{}
+throw new Error(message);
+}
+
+const blob=await response.blob();
+
+let filename=format==="pdf"?"Предписание.pdf":"Предписание.docx";
+const disposition=response.headers.get("Content-Disposition")||"";
+const match=disposition.match(/filename="?([^";]+)"?/i);
+if(match) filename=decodeURIComponent(match[1]);
+
+const url=URL.createObjectURL(blob);
+const link=document.createElement("a");
+link.href=url;
+link.download=filename;
+document.body.appendChild(link);
+link.click();
+link.remove();
+
+setTimeout(()=>URL.revokeObjectURL(url),1000);
+
+showMessage(
+format==="docx"?"Word готов и скачан.":"PDF готов и скачан.",
+"info"
+);
+
+}catch(error){
+showMessage(error.message||"Ошибка формирования файла.","error");
+}finally{
+button.disabled=false;
+}
+}
+
+document.getElementById("docxButton").onclick=()=>{
+downloadFile("docx",document.getElementById("docxButton"));
+};
+
+document.getElementById("pdfButton").onclick=()=>{
+downloadFile("pdf",document.getElementById("pdfButton"));
+};
+
+document.querySelectorAll("input,select,textarea").forEach(element=>{
+element.addEventListener("input",()=>element.classList.remove("error"));
+element.addEventListener("change",()=>element.classList.remove("error"));
+});
+</script>
+</body>
+</html>
